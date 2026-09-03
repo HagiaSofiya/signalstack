@@ -1,0 +1,12 @@
+{
+  "minimumPassRate": 0.9,
+  "minimumToolSelectionAccuracy": 0.95,
+  "minimumNumericalAccuracy": 1.0,
+  "minimumGroundingRate": 0.95,
+  "maximumHallucinationRate": 0.0,
+  "maximumAverageCost": 0.03,
+  "maximumAverageToolCalls": 4,
+  "maximumPassRateRegression": 0.05,
+  "maximumGroundingRegression": 0.05,
+  "criticalCasesMustPass": true
+}

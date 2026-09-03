@@ -1,0 +1,10 @@
+{
+  "name": "@signalstack/analysis",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "uvicorn app.main:app --reload --port 8000",
+    "start": "uvicorn app.main:app --port 8000",
+    "test": "pytest tests -q"
+  }
+}

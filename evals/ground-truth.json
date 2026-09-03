@@ -1,0 +1,177 @@
+{
+  "suiteId": "signalstack-core",
+  "suiteVersion": "1.0.0",
+  "datasetVersion": "signalstack-demo-2026-01-v1",
+  "dataset": "services/analysis/examples/signalstack-demo.csv",
+  "cases": [
+    {
+      "caseId": "schema-inspection",
+      "expectedAnswerFacts": [
+        {
+          "field": "rowCount",
+          "value": 18
+        },
+        {
+          "field": "columnCount",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "caseId": "missing-values",
+      "expectedAnswerFacts": [
+        {
+          "field": "missingCount",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "caseId": "total-revenue",
+      "expectedAnswerFacts": [
+        {
+          "field": "value",
+          "value": 337700
+        }
+      ]
+    },
+    {
+      "caseId": "top-channel-revenue",
+      "expectedAnswerFacts": [
+        {
+          "field": "channel",
+          "value": "Google"
+        },
+        {
+          "field": "revenue",
+          "value": 153200
+        }
+      ]
+    },
+    {
+      "caseId": "average-category-revenue",
+      "expectedAnswerFacts": [
+        {
+          "field": "category",
+          "value": "Office"
+        },
+        {
+          "field": "revenue",
+          "value": 19733.333333333332,
+          "tolerance": 0.01
+        }
+      ]
+    },
+    {
+      "caseId": "april-vs-may",
+      "expectedAnswerFacts": [
+        {
+          "field": "period",
+          "value": "May"
+        },
+        {
+          "field": "value",
+          "value": 64800
+        },
+        {
+          "field": "absoluteChange",
+          "value": 6100
+        },
+        {
+          "field": "percentChange",
+          "value": 10.391822827938672,
+          "tolerance": 0.01
+        }
+      ]
+    },
+    {
+      "caseId": "west-revenue-filter",
+      "expectedAnswerFacts": [
+        {
+          "field": "value",
+          "value": 153200
+        }
+      ]
+    },
+    {
+      "caseId": "top-products",
+      "expectedAnswerFacts": [
+        {
+          "field": "product",
+          "value": "Atlas Desk"
+        },
+        {
+          "field": "revenue",
+          "value": 96000
+        }
+      ]
+    },
+    {
+      "caseId": "revenue-orders-correlation",
+      "expectedAnswerFacts": [
+        {
+          "field": "column",
+          "value": "revenue"
+        },
+        {
+          "field": "correlation",
+          "value": 0.9967535590329397,
+          "tolerance": 0.01
+        }
+      ]
+    },
+    {
+      "caseId": "monthly-revenue-chart",
+      "expectedAnswerFacts": [
+        {
+          "field": "date",
+          "value": "2026-01-05"
+        },
+        {
+          "field": "revenue",
+          "value": 18400
+        }
+      ]
+    },
+    {
+      "caseId": "orders-revenue-scatter",
+      "expectedAnswerFacts": [
+        {
+          "field": "correlation",
+          "value": 0.9967535590329397,
+          "tolerance": 0.01
+        }
+      ]
+    },
+    {
+      "caseId": "unsupported-weather",
+      "expectedAnswerFacts": []
+    },
+    {
+      "caseId": "invalid-column-recovery",
+      "expectedAnswerFacts": []
+    },
+    {
+      "caseId": "top-regions-by-orders",
+      "expectedAnswerFacts": [
+        {
+          "field": "region",
+          "value": "West"
+        },
+        {
+          "field": "orders",
+          "value": 1103
+        }
+      ]
+    },
+    {
+      "caseId": "electronics-revenue-filter",
+      "expectedAnswerFacts": [
+        {
+          "field": "value",
+          "value": 92300
+        }
+      ]
+    }
+  ]
+}

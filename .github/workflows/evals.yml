@@ -1,0 +1,121 @@
+name: SignalStack evaluations
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Model used for the real-provider suite
+        required: false
+        default: gpt-4o-mini
+
+permissions:
+  contents: read
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/signalstack
+  ANALYSIS_SERVICE_URL: http://127.0.0.1:8000
+  AI_PROVIDER: openai
+  AGENT_PROMPT_VERSION: v1
+  TOOL_SCHEMA_VERSION: v1
+
+jobs:
+  deterministic:
+    name: Deterministic tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: signalstack
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U postgres -d signalstack"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: services/analysis/pyproject.toml
+      - run: pnpm install --frozen-lockfile
+      - run: python -m venv services/analysis/.venv
+      - run: services/analysis/.venv/bin/pip install -e 'services/analysis[test]'
+      - run: pnpm --filter @signalstack/db db:generate
+      - run: pnpm --filter @signalstack/db exec prisma migrate deploy
+      - run: pnpm typecheck
+      - run: services/analysis/.venv/bin/pytest services/analysis/tests -q
+      - run: pnpm --filter @signalstack/ai test
+      - run: pnpm --filter @signalstack/api test
+
+  real-provider:
+    name: Real-provider evaluation gate
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    needs: deterministic
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: signalstack
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U postgres -d signalstack"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pnpm install --frozen-lockfile
+      - run: python -m venv services/analysis/.venv
+      - run: services/analysis/.venv/bin/pip install -e 'services/analysis[test]'
+      - run: pnpm --filter @signalstack/db db:generate
+      - run: pnpm --filter @signalstack/db exec prisma migrate deploy
+      - run: services/analysis/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --app-dir services/analysis &
+      - run: |
+          ready=0
+          for attempt in {1..30}; do
+            if curl --fail http://127.0.0.1:8000/health; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+      - name: Run real-provider evaluation
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AI_MODEL: ${{ github.event.inputs.model || 'gpt-4o-mini' }}
+          EVAL_BASELINE_ID: ${{ vars.EVAL_BASELINE_ID }}
+        run: |
+          if [ -n "$EVAL_BASELINE_ID" ]; then
+            pnpm eval --baseline "$EVAL_BASELINE_ID"
+          else
+            pnpm eval
+          fi

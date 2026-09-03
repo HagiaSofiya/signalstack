@@ -1,0 +1,19 @@
+date,channel,revenue,orders,customers,region,product,category
+2026-01-05,Google,18400,142,118,West,Atlas Desk,Office
+2026-01-12,Meta,12900,98,87,East,Atlas Desk,Office
+2026-01-19,Direct,9600,71,64,South,Northstar Chair,Office
+2026-02-04,Google,22100,161,132,West,Northstar Chair,Office
+2026-02-11,Meta,14700,109,94,East,Beacon Lamp,Home
+2026-02-18,Direct,11300,82,73,South,Beacon Lamp,Home
+2026-03-03,Google,24800,178,145,West,Orbit Monitor,Electronics
+2026-03-10,Meta,16900,121,105,East,Orbit Monitor,Electronics
+2026-03-17,Direct,12700,91,79,South,Atlas Desk,Office
+2026-04-07,Google,26700,191,154,West,Beacon Lamp,Home
+2026-04-14,Meta,18100,132,111,East,Northstar Chair,Office
+2026-04-21,Direct,13900,97,84,South,Orbit Monitor,Electronics
+2026-05-05,Google,29400,207,168,West,Atlas Desk,Office
+2026-05-12,Meta,20300,145,122,East,Orbit Monitor,Electronics
+2026-05-19,Direct,15100,105,91,South,Beacon Lamp,Home
+2026-06-02,Google,31800,224,181,West,Northstar Chair,Office
+2026-06-09,Meta,22600,158,132,East,Atlas Desk,Office
+2026-06-16,Direct,16400,113,97,South,Orbit Monitor,Electronics

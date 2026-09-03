@@ -1,0 +1,7 @@
+ALTER TABLE "AgentRun" ADD COLUMN "provider" TEXT;
+ALTER TABLE "AgentRun" ADD COLUMN "inputTokens" INTEGER;
+ALTER TABLE "AgentRun" ADD COLUMN "outputTokens" INTEGER;
+ALTER TABLE "AgentRun" ADD COLUMN "totalTokens" INTEGER;
+ALTER TABLE "AgentRun" ADD COLUMN "startedAt" TIMESTAMP(3);
+ALTER TABLE "AgentRun" ADD COLUMN "completedAt" TIMESTAMP(3);
+ALTER TABLE "AgentRun" ADD COLUMN "durationMs" INTEGER;

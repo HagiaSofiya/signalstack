@@ -1,0 +1,32 @@
+node_modules
+.pnpm-store
+.next
+dist
+build
+coverage
+.turbo
+*.tsbuildinfo
+/bridge/
+.env
+.env.*
+!.env.example
+*.log
+
+# Python environments, caches, and packaging metadata
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local runtime data and databases
+/storage/
+apps/api/storage/
+*.db-journal
+packages/db/prisma/dev.db
+packages/db/src/generated
+
+# OS metadata
+.DS_Store
