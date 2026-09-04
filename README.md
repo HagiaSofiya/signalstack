@@ -28,6 +28,30 @@ Document-export artifacts are not part of SignalStack. The local `/bridge/` dire
 - `packages/ai` owns the bounded multi-tool agent loop, provider adapter, dataset tools, and grounded chart tool. It has no UI concerns and does not expose hidden model reasoning.
 - `services/analysis` is intentionally separate from the TypeScript runtime. It owns pandas-backed dataset inspection and constrained analytical operations.
 
+```mermaid
+flowchart LR
+    User[User] --> Web[apps/web<br/>Next.js dashboard]
+    Web -->|HTTP + shared contracts| API[apps/api<br/>Hono API]
+    API --> DB[(PostgreSQL<br/>via packages/db)]
+    API --> Storage[(CSV storage)]
+    API --> AI[packages/ai<br/>agent loop + provider adapters]
+    AI -->|LLM requests| Provider[OpenAI or OpenRouter]
+    AI -->|validated tool calls| API
+    API -->|inspect/analyze| Analysis[services/analysis\nFastAPI + pandas]
+    Analysis --> Storage
+    Analysis -->|bounded structured results| API
+    API -->|persist runs, steps, evidence| DB
+    DB -->|history + results| Web
+
+    Cases[evals/cases.json<br/>+ ground-truth.json] --> Eval[Evaluation runner]
+    Eval --> AI
+    Eval --> DB
+    Eval --> Dashboard[apps/web<br/>/evals dashboard]
+    Dashboard --> Web
+```
+
+The normal request path runs from the browser through the API and agent loop, with the Python service performing bounded pandas operations against stored CSV files. Structured results and every visible agent step are persisted in PostgreSQL before the UI renders the answer, evidence, charts, or run history. The evaluation runner reuses the same agent loop and stores its local scores alongside the production-style run records.
+
 ## Local setup
 
 Prerequisites: Node.js 22+, pnpm 11+, Python 3.11+, and PostgreSQL 15+.
@@ -227,7 +251,7 @@ EvalSuiteRun + EvalCaseResult
 
 ## Evaluation regression automation
 
-Milestone 8 turns the evaluation suite into a versioned regression gate. `evals/cases.json` contains the suite ID, semantic version, dataset version, and case metadata. The deterministic pandas artifact in `evals/ground-truth.json` carries the same metadata; regenerate it after changing the benchmark or demo dataset:
+The evaluation suite is a versioned regression gate. `evals/cases.json` contains the suite ID, semantic version, dataset version, and case metadata. The deterministic pandas artifact in `evals/ground-truth.json` carries the same metadata; regenerate it after changing the benchmark or demo dataset:
 
 ```bash
 services/analysis/.venv/bin/python services/analysis/scripts/generate_eval_ground_truth.py
