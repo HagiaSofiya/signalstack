@@ -1,5 +1,6 @@
 import {
   agentRunResultSchema,
+  answerVerificationSchema,
   datasetAnalysisResultSchema,
   chartSpecSchema,
   type AgentRun,
@@ -28,6 +29,8 @@ export function reconstructAgentRunResult(input: {
     const chart = chartSpecSchema.safeParse(step.output);
     return chart.success ? [chart.data] : [];
   });
+  const verificationStep = [...input.steps].reverse().find((step) => step.type === "verification" && step.status === "completed");
+  const verification = answerVerificationSchema.safeParse(verificationStep?.output);
   const errorSummary = input.run.status === "failed" ? findSafeError(input.steps) ?? "This agent run failed before it completed." : null;
 
   return agentRunResultSchema.parse({
@@ -37,6 +40,7 @@ export function reconstructAgentRunResult(input: {
     totalDurationMs,
     evidence,
     charts,
+    verification: verification.success ? verification.data : null,
     observability: {
       totalDurationMs,
       llmDurationMs: sumDurations(llmSteps),

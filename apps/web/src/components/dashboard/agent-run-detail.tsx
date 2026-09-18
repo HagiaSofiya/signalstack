@@ -1,4 +1,4 @@
-import { AlertTriangle, ListTree } from "lucide-react";
+import { AlertTriangle, ListTree, ShieldAlert } from "lucide-react";
 import dynamic from "next/dynamic";
 import type { AgentRunResult, AnalysisEvidence } from "@signalstack/schemas";
 
@@ -29,25 +29,63 @@ function formatCost(value: number | null) {
   return value === null ? "Unavailable" : `$${value.toFixed(6)}`;
 }
 
+function verificationBadge(verification: AgentRunResult["verification"]) {
+  if (!verification) return null;
+  if (verification.status === "not_applicable") return <Badge variant="outline">Nothing to verify</Badge>;
+  if (verification.status === "verified") return <Badge variant="success">Verified against tool results</Badge>;
+  const unsupported = verification.claims.filter((claim) => !claim.supported).length;
+  return <Badge variant="secondary">{unsupported ? `${unsupported} unverified figure${unsupported === 1 ? "" : "s"}` : "Unverified claims"}</Badge>;
+}
+
 function statusVariant(status: AgentRunResult["run"]["status"]) {
   return status === "completed" ? "success" : status === "failed" ? "secondary" : "outline";
 }
 
 export function AgentRunDetail({ result }: { result: AgentRunResult }) {
-  const { observability } = result;
+  const { observability, verification } = result;
   const statusLabel = result.run.status === "completed" ? "completed" : result.run.status;
+  const unverifiedFigures = verification?.claims.filter((claim) => !claim.supported).map((claim) => claim.text) ?? [];
 
   return (
     <Card className="border-primary/20 bg-card shadow-md">
       <CardHeader>
         <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-primary"><ListTree aria-hidden="true" /> Agent run <Badge variant={statusVariant(result.run.status)} className="capitalize">{statusLabel}</Badge></div>
+          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-primary"><ListTree aria-hidden="true" /> Agent run <Badge variant={statusVariant(result.run.status)} className="capitalize">{statusLabel}</Badge>{verificationBadge(verification)}</div>
           <CardTitle>Answer</CardTitle>
           <CardDescription className="text-sm leading-6 text-foreground">{result.answer}</CardDescription>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
         {result.errorSummary ? <Alert className="border-destructive/30 bg-destructive/5"><AlertTriangle aria-hidden="true" /><div><AlertTitle>Run failed</AlertTitle><AlertDescription>{result.errorSummary}</AlertDescription></div></Alert> : null}
+        {verification ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Answer verification</p>
+            {verification.status === "unsupported" ? (
+              <Alert className="border-destructive/30 bg-destructive/5">
+                <ShieldAlert aria-hidden="true" />
+                <div>
+                  <AlertTitle>Some claims could not be traced to a tool result</AlertTitle>
+                  <AlertDescription>
+                    {unverifiedFigures.length ? `Figures missing from every analysis result: ${unverifiedFigures.join(", ")}. ` : null}
+                    {verification.unsupportedColumns.length ? `Columns missing from the inspected schema: ${verification.unsupportedColumns.join(", ")}.` : null}
+                  </AlertDescription>
+                </div>
+              </Alert>
+            ) : null}
+            {verification.claims.length ? (
+              <div className="grid gap-2 rounded-xl border bg-secondary/30 p-4 text-xs sm:grid-cols-2 lg:grid-cols-3">
+                {verification.claims.map((claim, index) => (
+                  <div key={`${claim.text}-${index}`} className="rounded-lg bg-background p-3">
+                    <p className="font-medium">{claim.text}</p>
+                    <p className="mt-0.5 text-muted-foreground">{claim.supported ? `From step ${claim.sourceStepId?.slice(0, 8) ?? "—"}` : "Not found in any tool result"}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">This answer made no numeric claims to check against tool results.</p>
+            )}
+          </div>
+        ) : null}
         <div className="grid gap-3 rounded-xl bg-secondary/50 p-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
           <div><p className="text-muted-foreground">Model / provider</p><p className="mt-1 font-medium">{observability.model ?? "Unavailable"} · {observability.provider ?? "Unavailable"}</p></div>
           <div><p className="text-muted-foreground">Total duration</p><p className="mt-1 font-medium">{formatDuration(observability.totalDurationMs)}</p></div>

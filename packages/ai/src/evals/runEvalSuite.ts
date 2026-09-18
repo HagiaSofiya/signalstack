@@ -15,6 +15,7 @@ import { aiEnv } from "../config.js";
 import { calculateEstimatedCost } from "../providers/pricing.js";
 import type { LLMProvider } from "../providers/provider.js";
 import { AgentExecutionError, runAgent } from "../agent/runAgent.js";
+import { verifyAnswer } from "../grounding/verifyAnswer.js";
 import { LLMProviderError } from "../providers/provider.js";
 import { analyzeDatasetTool } from "../tools/analyzeDatasetTool.js";
 import { createChart } from "../tools/createChartTool.js";
@@ -214,13 +215,14 @@ function scoreCase(testCase: EvalCase, steps: AgentStep[], answer: string): { pa
   const toolSelection = requiredTools && forbiddenTools && expectedOperation ? 1 : 0;
 
   const expectedFacts = testCase.expected.expectedAnswerFacts;
-  const numericalCorrectness = expectedFacts.length === 0 || expectedFacts.every((expected) => steps.some((step) => step.status === "completed" && factFound(step.output, expected))) ? 1 : 0;
-  const observedValues = completedToolSteps.flatMap((step) => collectValues(step.output));
-  const unsupportedNumbers = extractNumbers(answer).some((number) => !observedValues.some((value) => typeof value === "number" && Math.abs(value - number) <= Math.max(0.01, Math.abs(number) * 0.01)));
+  // Facts must come from a tool result. Searching every step would also search the verification
+  // step, whose claims carry values read back out of the answer itself.
+  const numericalCorrectness = expectedFacts.length === 0 || expectedFacts.every((expected) => completedToolSteps.some((step) => factFound(step.output, expected))) ? 1 : 0;
+  const verification = verifyAnswer({ answer, steps });
+  const unsupportedNumbers = verification.claims.some((claim) => !claim.supported);
   const grounding = numericalCorrectness && !unsupportedNumbers ? 1 : 0;
-  const knownColumns = new Set(completedToolSteps.flatMap((step) => inspectColumns(step.output)));
-  const referencedColumns = [...answer.matchAll(/(?:column|field)\s+["'`]?([A-Za-z_][\w -]*)/gi)].map((match) => match[1]?.trim().replace(/[.,!?]+$/, "")).filter((value): value is string => Boolean(value));
-  const hallucination = referencedColumns.every((column) => knownColumns.size === 0 || knownColumns.has(column) || testCase.category === "recovery") && !unsupportedNumbers ? 1 : 0;
+  const unsupportedColumns = testCase.category === "recovery" ? [] : verification.unsupportedColumns;
+  const hallucination = unsupportedColumns.length === 0 && !unsupportedNumbers ? 1 : 0;
 
   let chartCorrectness: number | null = null;
   if (testCase.expected.requiresChart) {
@@ -262,26 +264,6 @@ function findFieldValues(value: unknown, field: string): unknown[] {
 function matches(actual: unknown, expected: unknown, tolerance = 0) {
   if (typeof actual === "number" && typeof expected === "number") return Math.abs(actual - expected) <= Math.max(tolerance, Math.abs(expected) * 0.01);
   return actual === expected || String(actual) === String(expected);
-}
-
-function collectValues(value: unknown): unknown[] {
-  if (Array.isArray(value)) return value.flatMap(collectValues);
-  const record = asRecord(value);
-  if (!record) return [value];
-  return Object.values(record).flatMap(collectValues);
-}
-
-function extractNumbers(value: string): number[] {
-  return [...value.matchAll(/-?\b\d[\d,]*(?:\.\d+)?%?/g)].map((match) => Number(match[0].replaceAll(",", "").replace("%", ""))).filter(Number.isFinite);
-}
-
-function inspectColumns(value: unknown): string[] {
-  const record = asRecord(value);
-  if (!record || !Array.isArray(record.columns)) return [];
-  return record.columns.flatMap((column) => {
-    const item = asRecord(column);
-    return typeof item?.name === "string" ? [item.name] : [];
-  });
 }
 
 function repeatedToolCalls(steps: AgentStep[]) {

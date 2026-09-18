@@ -272,6 +272,19 @@ export const datasetDetailSchema = datasetSchema.extend({
   inspection: datasetInspectionSchema.nullable(),
 });
 
+export const verifiedClaimSchema = z.object({
+  text: z.string().min(1),
+  value: z.number(),
+  supported: z.boolean(),
+  sourceStepId: z.string().nullable(),
+});
+
+export const answerVerificationSchema = z.object({
+  status: z.enum(["verified", "unsupported", "not_applicable"]),
+  claims: z.array(verifiedClaimSchema),
+  unsupportedColumns: z.array(z.string()),
+});
+
 export const agentRunResultSchema = z.object({
   run: agentRunSchema,
   answer: z.string(),
@@ -280,6 +293,7 @@ export const agentRunResultSchema = z.object({
   evidence: z.array(analysisEvidenceSchema),
   charts: z.array(chartSpecSchema).max(3),
   observability: agentRunObservabilitySchema,
+  verification: answerVerificationSchema.nullable(),
   errorSummary: z.string().nullable(),
 });
 
@@ -455,6 +469,8 @@ export type CreateAgentRunInput = z.infer<typeof createAgentRunSchema>;
 export type AskDatasetInput = z.infer<typeof askDatasetSchema>;
 export type AgentStep = z.infer<typeof agentStepSchema>;
 export type AgentRunResult = z.infer<typeof agentRunResultSchema>;
+export type VerifiedClaim = z.infer<typeof verifiedClaimSchema>;
+export type AnswerVerification = z.infer<typeof answerVerificationSchema>;
 export type EvalFact = z.infer<typeof evalFactSchema>;
 export type EvalExpected = z.infer<typeof evalExpectedSchema>;
 export type EvalCase = z.infer<typeof evalCaseSchema>;

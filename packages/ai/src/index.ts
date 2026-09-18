@@ -53,6 +53,8 @@ export {
   DATA_ASSISTANT_INSTRUCTIONS,
 } from "./agent/runAgent.js";
 export type { AgentExecutionStep, AgentResult } from "./agent/runAgent.js";
+export { verifyAnswer } from "./grounding/verifyAnswer.js";
+export type { VerifiableStep } from "./grounding/verifyAnswer.js";
 export {
   createInspectDatasetTool,
   inspectDatasetTool,

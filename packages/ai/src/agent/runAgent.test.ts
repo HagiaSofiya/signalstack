@@ -53,8 +53,8 @@ describe("runAgent", () => {
     });
 
     expect(result.answer).toBe("The dataset has two rows.");
-    expect(result.steps.map((step) => step.type)).toEqual(["tool", "generate_answer"]);
-    expect(persistedSteps).toEqual(["tool:completed", "generate_answer:completed"]);
+    expect(result.steps.map((step) => step.type)).toEqual(["tool", "generate_answer", "verification"]);
+    expect(persistedSteps).toEqual(["tool:completed", "generate_answer:completed", "verification:completed"]);
     expect(execute).toHaveBeenCalledWith({}, expect.objectContaining({ datasetId }));
     expect(provider.generate).toHaveBeenCalledTimes(2);
     expect(persistedIds.every((id) => /^[0-9a-f-]{36}$/.test(id))).toBe(true);
@@ -96,7 +96,7 @@ describe("runAgent", () => {
 
     expect(result.answer).toContain("cannot make a factual claim");
     expect(provider.generate).toHaveBeenCalledTimes(2);
-    expect(steps).toHaveLength(2);
+    expect(steps).toHaveLength(3);
     expect(steps[0]).toMatchObject({ type: "tool", status: "failed" });
   });
 
@@ -193,5 +193,44 @@ describe("runAgent", () => {
 
     expect(persisted[0]).toMatchObject({ toolName: "create_chart", input: { sourceStepId: "22222222-2222-4222-8222-222222222222" } });
     expect(persisted[0]?.id).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it("verifies the answer against completed tool results and persists the verdict", async () => {
+    const provider = {
+      generate: vi.fn()
+        .mockResolvedValueOnce({
+          id: "response-verify-1",
+          model: "test-model",
+          text: "",
+          toolCalls: [{ callId: "call-verify-1", name: "inspect_dataset", arguments: {} }],
+          outputItems: [],
+          usage: usage(5),
+        })
+        .mockResolvedValueOnce({
+          id: "response-verify-2",
+          model: "test-model",
+          text: "The dataset has 2 rows and 9 duplicates.",
+          toolCalls: [],
+          outputItems: [],
+          usage: usage(5),
+        }),
+    };
+
+    const result = await runAgent({
+      question: "How many rows are there?",
+      datasetId,
+      provider,
+      tools: [makeTool(vi.fn().mockResolvedValue(toolResult))],
+    });
+
+    const verification = result.steps.at(-1);
+    expect(verification).toMatchObject({ type: "verification", toolName: null, status: "completed" });
+    expect(verification?.output).toMatchObject({
+      status: "unsupported",
+      claims: [
+        { text: "2", supported: true },
+        { text: "9", supported: false, sourceStepId: null },
+      ],
+    });
   });
 });

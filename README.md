@@ -25,7 +25,7 @@ Document-export artifacts are not part of SignalStack. The local `/bridge/` dire
 - `apps/api` owns HTTP routing and application orchestration. Legacy list/CRUD routes remain lightweight in-memory placeholders, while dataset upload and agent runs use the Prisma boundary for durable records.
 - `packages/db` is the only package that knows about Prisma and PostgreSQL. Prisma migrations and generated client output belong here.
 - `packages/schemas` is the contract layer shared by the web and API. It keeps validation and serialized shapes aligned.
-- `packages/ai` owns the bounded multi-tool agent loop, provider adapter, dataset tools, and grounded chart tool. It has no UI concerns and does not expose hidden model reasoning.
+- `packages/ai` owns the bounded multi-tool agent loop, provider adapter, dataset tools, grounded chart tool, and the deterministic answer verifier shared with the evaluation scorer. It has no UI concerns and does not expose hidden model reasoning.
 - `services/analysis` is intentionally separate from the TypeScript runtime. It owns pandas-backed dataset inspection and constrained analytical operations.
 
 ```mermaid
@@ -151,9 +151,11 @@ validated ChartSpec
     ↓
 Configured LLM final answer
     ↓
+verify_answer grounding check against persisted tool results
+    ↓
 AgentRun + AgentStep persistence
     ↓
-answer and run timeline in the UI
+answer, verification verdict, and run timeline in the UI
 ```
 
 The CSV itself is never sent to the model. Tools send only the selected dataset's internal storage path and validated operation parameters to the Python service. The service owns all pandas work and returns bounded structured results. The TypeScript tool validates those results with `packages/schemas`, and the API persists each tool step as it completes. `create_chart` accepts a source AgentStep ID, reloads that completed analysis result through Prisma, and builds chart data from it; the model cannot resend or invent values. Correctable tool failures are returned to the model with available columns or validation details so it can retry; provider failures and exhausted tool-call limits fail the run.
@@ -195,6 +197,20 @@ Example questions for the demo sales dataset at `services/analysis/examples/sign
 8. Show the monthly revenue trend.
 9. Which regions have more than 300 orders in total?
 10. Show the relationship between orders and revenue.
+
+## Answer verification
+
+Every answer is checked against the tool results it was supposed to come from before the UI renders it. The check is deterministic and never calls a model: `packages/ai/src/grounding/verifyAnswer.ts` extracts each numeric claim from the answer, matches it to the completed `AgentStep` whose structured output contains that value within a 1% tolerance, and compares every referenced column against the inspected schema. Quoted column names are read whole; an unquoted name stops at the first non-word character.
+
+The verdict is persisted as a `verification` step on the run, so historical runs show the same result without recomputing it:
+
+- `verified`: every figure was traced to a tool result and every referenced column exists.
+- `unsupported`: at least one figure appears in no tool result, or a referenced column is absent from the inspected schema.
+- `not_applicable`: the answer made no numeric or column claim to check.
+
+The run detail shows the verdict as a badge, lists each figure with the step it came from, and names the unsupported figures and columns when the check fails. A failed check does not fail the run: the answer is still shown, marked for what it is.
+
+The same module backs the `grounding` and `hallucination` scores in the evaluation suite, so offline scoring and the live guardrail cannot drift apart.
 
 ## Persisted run history and observability
 

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import type { AgentTool } from "../index.js";
+import { verifyAnswer } from "../grounding/verifyAnswer.js";
 import type { LLMProvider, ProviderResponse, ProviderToolDefinition, ProviderUsage } from "../providers/provider.js";
 
 export const DATA_ASSISTANT_INSTRUCTIONS = `You are a data analysis assistant working with a user-provided dataset.
@@ -16,7 +17,7 @@ Do not expose private model reasoning or hidden chain-of-thought.`;
 
 export type AgentExecutionStep = {
   id: string;
-  type: "tool" | "generate_answer";
+  type: "tool" | "generate_answer" | "verification";
   toolName: string | null;
   status: "completed" | "failed";
   input: unknown;
@@ -94,6 +95,7 @@ export async function runAgent(options: {
 
     if (response.toolCalls.length === 0) {
       await emitAnswerStep(options, steps, response.text, generationStartedAt);
+      await emitVerificationStep(options, steps, response.text);
       return {
         answer: response.text.trim(),
         steps,
@@ -204,6 +206,24 @@ async function emitAnswerStep(
     durationMs: elapsed(startedAt),
   });
   if (!hasAnswer) throw new AgentExecutionError("The model returned an empty answer");
+}
+
+async function emitVerificationStep(
+  options: { onStep?: (step: AgentExecutionStep) => Promise<void> | void },
+  steps: AgentExecutionStep[],
+  answer: string,
+) {
+  const startedAt = performance.now();
+  const verification = verifyAnswer({ answer, steps });
+  await emitStep(options, steps, {
+    id: randomUUID(),
+    type: "verification",
+    toolName: null,
+    status: "completed",
+    input: { phase: "grounding" },
+    output: verification,
+    durationMs: elapsed(startedAt),
+  });
 }
 
 async function emitStep(
