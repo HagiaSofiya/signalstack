@@ -39,7 +39,10 @@ export function verifyAnswer(input: { answer: string; steps: VerifiableStep[] })
 
 export function extractClaims(answer: string): Array<{ text: string; value: number }> {
   return [...answer.matchAll(numberPattern)]
-    .map((match) => ({ text: match[0], value: Number(match[0].replaceAll(",", "").replace("%", "")) }))
+    // A trailing comma is sentence punctuation, not part of the number, but the pattern has to
+    // allow inner commas to read grouped figures like 1,234.
+    .map((match) => match[0].replace(/,+$/, ""))
+    .map((text) => ({ text, value: Number(text.replaceAll(",", "").replace("%", "")) }))
     .filter((claim) => Number.isFinite(claim.value));
 }
 

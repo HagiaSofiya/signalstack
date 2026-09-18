@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { referencedColumns, verifyAnswer, type VerifiableStep } from "./verifyAnswer.js";
+import { extractClaims, referencedColumns, verifyAnswer, type VerifiableStep } from "./verifyAnswer.js";
 
 const analysisStepId = "11111111-1111-4111-8111-111111111111";
 const secondStepId = "22222222-2222-4222-8222-222222222222";
@@ -99,5 +99,11 @@ describe("referencedColumns", () => {
 
   it("keeps a quoted name with spaces intact", () => {
     expect(referencedColumns('The column "unit price" is numeric.')).toEqual(["unit price"]);
+  });
+});
+
+describe("extractClaims", () => {
+  it("drops sentence punctuation from the claim text but keeps grouping commas", () => {
+    expect(extractClaims("Google made 153,200, ahead of Meta.")).toEqual([{ text: "153,200", value: 153200 }]);
   });
 });
