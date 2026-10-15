@@ -33,7 +33,7 @@ function describe(run: AgentRun) {
   return run.durationMs === null ? asked : `${asked} · ${(run.durationMs / 1000).toFixed(1)} sec`;
 }
 
-function RunRow({ run }: { run: AgentRun }) {
+export function AgentRunRow({ run }: { run: AgentRun }) {
   const StatusIcon = statusIcons[run.status];
   const content = (
     <>
@@ -67,7 +67,9 @@ export function AgentRunsList({ runs }: { runs: AgentRun[] }) {
           <CardTitle>Recent agent runs</CardTitle>
           <CardDescription>Questions asked across your project data.</CardDescription>
         </div>
-        <Button variant="ghost" size="sm">View all <ArrowUpRight data-icon="inline-end" aria-hidden="true" /></Button>
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/agent-runs">View all <ArrowUpRight data-icon="inline-end" aria-hidden="true" /></Link>
+        </Button>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {runs.length === 0 ? (
@@ -75,7 +77,7 @@ export function AgentRunsList({ runs }: { runs: AgentRun[] }) {
             No agent runs yet. Ask a question about a dataset to get started.
           </p>
         ) : null}
-        {runs.map((run) => <RunRow key={run.id} run={run} />)}
+        {runs.map((run) => <AgentRunRow key={run.id} run={run} />)}
       </CardContent>
     </Card>
   );

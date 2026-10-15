@@ -12,6 +12,21 @@ function describe(dataset: DatasetDetail) {
   return `${rows} · Added ${added}`;
 }
 
+export function DatasetRow({ dataset }: { dataset: DatasetDetail }) {
+  return (
+    <Link href={`/datasets/${dataset.id}`} className="flex items-center gap-3 rounded-xl border bg-background p-3.5 transition-colors hover:bg-secondary/40">
+      <div className="flex size-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+        <FileSpreadsheet aria-hidden="true" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{dataset.filename}</p>
+        <p className="text-xs text-muted-foreground">{describe(dataset)}</p>
+      </div>
+      <Badge variant="outline">CSV</Badge>
+    </Link>
+  );
+}
+
 export function DatasetList({ datasets }: { datasets: DatasetDetail[] }) {
   return (
     <Card>
@@ -20,7 +35,9 @@ export function DatasetList({ datasets }: { datasets: DatasetDetail[] }) {
           <CardTitle>Recent datasets</CardTitle>
           <CardDescription>The latest files added to this project.</CardDescription>
         </div>
-        <Button variant="ghost" size="sm">View all <ArrowUpRight data-icon="inline-end" aria-hidden="true" /></Button>
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/datasets">View all <ArrowUpRight data-icon="inline-end" aria-hidden="true" /></Link>
+        </Button>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {datasets.length === 0 ? (
@@ -28,18 +45,7 @@ export function DatasetList({ datasets }: { datasets: DatasetDetail[] }) {
             No datasets yet. Upload a CSV to get started.
           </p>
         ) : null}
-        {datasets.map((dataset) => (
-          <Link key={dataset.id} href={`/datasets/${dataset.id}`} className="flex items-center gap-3 rounded-xl border bg-background p-3.5 transition-colors hover:bg-secondary/40">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-              <FileSpreadsheet aria-hidden="true" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{dataset.filename}</p>
-              <p className="text-xs text-muted-foreground">{describe(dataset)}</p>
-            </div>
-            <Badge variant="outline">CSV</Badge>
-          </Link>
-        ))}
+        {datasets.map((dataset) => <DatasetRow key={dataset.id} dataset={dataset} />)}
       </CardContent>
     </Card>
   );
