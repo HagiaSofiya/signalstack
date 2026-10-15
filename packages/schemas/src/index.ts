@@ -245,6 +245,12 @@ export const agentRunListResponseSchema = z.object({
   hasMore: z.boolean(),
 });
 
+export const projectAgentRunsSchema = z.object({
+  items: z.array(agentRunSchema),
+  total: z.number().int().nonnegative(),
+  completedCount: z.number().int().nonnegative(),
+});
+
 export const createAgentRunSchema = z.object({
   projectId: z.string().uuid(),
   datasetId: z.string().uuid().nullable().optional(),
@@ -465,6 +471,8 @@ export type AgentRun = z.infer<typeof agentRunSchema>;
 export type AgentRunObservability = z.infer<typeof agentRunObservabilitySchema>;
 export type AgentRunSummary = z.infer<typeof agentRunSummarySchema>;
 export type AgentRunListResponse = z.infer<typeof agentRunListResponseSchema>;
+export type AgentRunStatus = z.infer<typeof agentRunStatusSchema>;
+export type ProjectAgentRuns = z.infer<typeof projectAgentRunsSchema>;
 export type CreateAgentRunInput = z.infer<typeof createAgentRunSchema>;
 export type AskDatasetInput = z.infer<typeof askDatasetSchema>;
 export type AgentStep = z.infer<typeof agentStepSchema>;

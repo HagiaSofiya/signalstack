@@ -7,6 +7,7 @@ import { agentRunRoutes } from "./routes/agent-runs.js";
 import { datasetRoutes } from "./routes/datasets.js";
 import { healthRoutes } from "./routes/health.js";
 import { projectRoutes } from "./routes/projects.js";
+import { projectRunRoutes } from "./routes/project-runs.js";
 import { datasetAskRoutes } from "./routes/dataset-ask.js";
 import { datasetRunRoutes } from "./routes/dataset-runs.js";
 import { evalRoutes } from "./routes/evals.js";
@@ -18,6 +19,7 @@ export const app = new Hono().use("*", logger()).use(
 
 app.route("/health", healthRoutes);
 app.route("/projects", projectRoutes);
+app.route("/projects", projectRunRoutes);
 app.route("/datasets", datasetRoutes);
 app.route("/datasets", datasetAskRoutes);
 app.route("/datasets", datasetRunRoutes);

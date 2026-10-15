@@ -7,6 +7,7 @@ export {
   failAgentRunRecord,
   findAgentRunWithSteps,
   listAgentRunSummaries,
+  listProjectAgentRuns,
   persistAgentStep,
 } from "./agent-runs.js";
 export {

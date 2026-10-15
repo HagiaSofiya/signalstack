@@ -7,23 +7,29 @@ import { AgentRunsList } from "@/components/dashboard/agent-runs-list";
 import { DatasetDetailView } from "@/components/dashboard/dataset-detail-view";
 import { DatasetUpload } from "@/components/dashboard/dataset-upload";
 import { DatasetList } from "@/components/dashboard/dataset-list";
-import {
-  DEMO_PROJECT_ID,
-  recentAgentRuns,
-} from "@/components/dashboard/dashboard-data";
+import { DEMO_PROJECT_ID } from "@/components/dashboard/dashboard-data";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import type { DatasetDetail } from "@signalstack/schemas";
+import type { DatasetDetail, ProjectAgentRuns } from "@signalstack/schemas";
 
-import { listDatasets } from "@/lib/api-client";
+import { getProjectRuns, listDatasets } from "@/lib/api-client";
 import { useCallback, useEffect, useState } from "react";
+
+function formatRowCount(rows: number) {
+  return rows < 1000 ? String(rows) : `${(rows / 1000).toFixed(1)}k`;
+}
 
 export function ProjectDashboard() {
   const [uploadedDataset, setUploadedDataset] = useState<DatasetDetail | null>(
     null,
   );
   const [datasets, setDatasets] = useState<DatasetDetail[]>([]);
+  const [agentRuns, setAgentRuns] = useState<ProjectAgentRuns>({
+    items: [],
+    total: 0,
+    completedCount: 0,
+  });
 
   const refreshDatasets = useCallback(async () => {
     try {
@@ -33,9 +39,27 @@ export function ProjectDashboard() {
     }
   }, []);
 
+  const refreshAgentRuns = useCallback(async () => {
+    try {
+      setAgentRuns(await getProjectRuns(DEMO_PROJECT_ID));
+    } catch (error) {
+      console.error("Agent runs could not be loaded", error);
+    }
+  }, []);
+
   useEffect(() => {
     void refreshDatasets();
-  }, [refreshDatasets]);
+    void refreshAgentRuns();
+  }, [refreshDatasets, refreshAgentRuns]);
+
+  const rowsAnalyzed = datasets.reduce(
+    (total, dataset) => total + (dataset.rowCount ?? 0),
+    0,
+  );
+  const completedShare =
+    agentRuns.total === 0
+      ? "No runs yet"
+      : `${Math.round((agentRuns.completedCount / agentRuns.total) * 100)}% completed`;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -90,14 +114,14 @@ export function ProjectDashboard() {
             />
             <StatCard
               label="Rows analyzed"
-              value="84.2k"
+              value={formatRowCount(rowsAnalyzed)}
               detail="Across all datasets"
               icon={FileStack}
             />
             <StatCard
               label="Agent runs"
-              value="28"
-              detail="91% completed"
+              value={String(agentRuns.total)}
+              detail={completedShare}
               icon={Activity}
             />
           </div>
@@ -110,6 +134,7 @@ export function ProjectDashboard() {
               onUploaded={(dataset) => {
                 setUploadedDataset(dataset);
                 void refreshDatasets();
+                void refreshAgentRuns();
               }}
             />
             <div className="flex flex-col justify-between rounded-2xl bg-primary p-7 text-primary-foreground shadow-sm">
@@ -140,7 +165,7 @@ export function ProjectDashboard() {
 
           <div className="grid gap-6 xl:grid-cols-2">
             <DatasetList datasets={datasets} />
-            <AgentRunsList runs={recentAgentRuns} />
+            <AgentRunsList runs={agentRuns.items} />
           </div>
         </div>
       </main>

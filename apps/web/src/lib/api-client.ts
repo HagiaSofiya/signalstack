@@ -4,11 +4,13 @@ import {
   evalSuiteRunDetailSchema,
   evalSuiteRunSchema,
   datasetDetailSchema,
+  projectAgentRunsSchema,
   type AgentRunListResponse,
   type AgentRunResult,
   type DatasetDetail,
   type EvalSuiteRun,
   type EvalSuiteRunDetail,
+  type ProjectAgentRuns,
 } from "@signalstack/schemas";
 
 import { webEnv } from "./env";
@@ -82,6 +84,17 @@ export async function listDatasets(projectId: string): Promise<DatasetDetail[]> 
 
   const parsed = datasetDetailSchema.array().safeParse(payload?.data);
   if (!parsed.success) throw new Error("The API returned an invalid dataset list");
+  return parsed.data;
+}
+
+export async function getProjectRuns(projectId: string, limit = 5): Promise<ProjectAgentRuns> {
+  const query = new URLSearchParams({ limit: String(limit) });
+  const response = await fetch(`${webEnv.NEXT_PUBLIC_API_URL}/projects/${projectId}/runs?${query.toString()}`);
+  const payload = (await response.json().catch(() => null)) as { data?: unknown; error?: string } | null;
+  if (!response.ok) throw new Error(payload?.error ?? "Agent runs could not be loaded");
+
+  const parsed = projectAgentRunsSchema.safeParse(payload?.data);
+  if (!parsed.success) throw new Error("The API returned an invalid agent run list");
   return parsed.data;
 }
 

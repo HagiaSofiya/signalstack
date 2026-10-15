@@ -4,10 +4,12 @@ import {
   agentRunSchema,
   agentRunSummarySchema,
   agentStepSchema,
+  projectAgentRunsSchema,
   type AgentRun,
   type AgentRunListResponse,
   type AgentRunSummary,
   type AgentStep,
+  type ProjectAgentRuns,
 } from "@signalstack/schemas";
 
 import { getDb } from "./client.js";
@@ -159,6 +161,23 @@ export async function listAgentRunSummaries(input: {
     hasMore,
     nextCursor: hasMore ? items.at(-1)?.id ?? null : null,
   });
+}
+
+export async function listProjectAgentRuns(input: {
+  projectId: string;
+  limit: number;
+}): Promise<ProjectAgentRuns> {
+  const db = getDb();
+  const [runs, total, completedCount] = await Promise.all([
+    db.agentRun.findMany({
+      where: { projectId: input.projectId },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: input.limit,
+    }),
+    db.agentRun.count({ where: { projectId: input.projectId } }),
+    db.agentRun.count({ where: { projectId: input.projectId, status: "completed" } }),
+  ]);
+  return projectAgentRunsSchema.parse({ items: runs.map(toAgentRun), total, completedCount });
 }
 
 function toAgentRunSummary(
