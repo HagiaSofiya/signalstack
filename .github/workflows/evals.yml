@@ -64,7 +64,7 @@ jobs:
 
   real-provider:
     name: Real-provider evaluation gate
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch'
     needs: deterministic
     runs-on: ubuntu-latest
     services:

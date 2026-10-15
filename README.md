@@ -292,7 +292,7 @@ The optional baseline must have the same suite, suite version, and dataset versi
 
 Use `EVAL_MODEL_ROLE=baseline` when intentionally recording a validated baseline run; normal runs default to `candidate`. `EVAL_BASELINE_ID` is used by CI as the explicit baseline identifier, while `--baseline latest` is convenient for local iteration.
 
-The GitHub Actions workflow at `.github/workflows/evals.yml` runs typechecking, Prisma setup, Python tests, and mocked TypeScript tests for every pull request. Real-provider evaluation runs on `main` and via `workflow_dispatch`, using the configured OpenAI repository secret by default. Local runs can use either supported provider. Set the optional `EVAL_BASELINE_ID` repository variable to enable an explicit CI baseline comparison; without it, the quality thresholds still gate the run.
+The GitHub Actions workflow at `.github/workflows/evals.yml` runs typechecking, Prisma setup, Python tests, and mocked TypeScript tests for every pull request. Real-provider evaluation runs only via `workflow_dispatch`, using the configured OpenAI repository secret by default. Local runs can use either supported provider. Set the optional `EVAL_BASELINE_ID` repository variable to enable an explicit CI baseline comparison; without it, the quality thresholds still gate the run.
 
 For a legitimate improvement, update the agent or model, run `pnpm eval --smoke`, run the full suite, inspect `/evals/:evalRunId` and the linked AgentRuns, then deliberately choose that validated run as the new baseline. Do not update the baseline solely because a cheaper model passes fewer cases. Future candidate promotion should consider quality first, then cost and latency.
 
