@@ -14,7 +14,7 @@ export type AgentRunItem = {
   duration: string;
 };
 
-export const DEMO_PROJECT_ID = "00000000-0000-0000-0000-000000000001";
+export const DEMO_PROJECT_ID = "11111111-1111-4111-8111-111111111111";
 
 export const recentDatasets: DatasetItem[] = [
   { id: "1", filename: "q3_revenue.csv", rows: "12,480 rows", updated: "Updated 2 hours ago", kind: "CSV" },

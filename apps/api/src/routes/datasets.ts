@@ -6,7 +6,7 @@ import { AnalysisServiceError, inspectDataset } from "../lib/analysis-client.js"
 import { removeDatasetFile, saveDatasetFile } from "../lib/dataset-storage.js";
 import { store } from "../lib/store.js";
 
-const defaultProjectId = "00000000-0000-0000-0000-000000000001";
+const defaultProjectId = "11111111-1111-4111-8111-111111111111";
 
 function isUploadedFile(value: unknown): value is File {
   return (
