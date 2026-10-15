@@ -74,6 +74,17 @@ export async function getDataset(datasetId: string): Promise<DatasetDetail> {
   return parsed.data;
 }
 
+export async function listDatasets(projectId: string): Promise<DatasetDetail[]> {
+  const query = new URLSearchParams({ projectId });
+  const response = await fetch(`${webEnv.NEXT_PUBLIC_API_URL}/datasets?${query.toString()}`);
+  const payload = (await response.json().catch(() => null)) as { data?: unknown; error?: string } | null;
+  if (!response.ok) throw new Error(payload?.error ?? "Datasets could not be loaded");
+
+  const parsed = datasetDetailSchema.array().safeParse(payload?.data);
+  if (!parsed.success) throw new Error("The API returned an invalid dataset list");
+  return parsed.data;
+}
+
 export async function getDatasetRuns(input: {
   datasetId: string;
   limit?: number;

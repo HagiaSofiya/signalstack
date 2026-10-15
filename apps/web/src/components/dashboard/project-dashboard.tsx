@@ -10,18 +10,32 @@ import { DatasetList } from "@/components/dashboard/dataset-list";
 import {
   DEMO_PROJECT_ID,
   recentAgentRuns,
-  recentDatasets,
 } from "@/components/dashboard/dashboard-data";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { DatasetDetail } from "@signalstack/schemas";
-import { useState } from "react";
+
+import { listDatasets } from "@/lib/api-client";
+import { useCallback, useEffect, useState } from "react";
 
 export function ProjectDashboard() {
   const [uploadedDataset, setUploadedDataset] = useState<DatasetDetail | null>(
     null,
   );
+  const [datasets, setDatasets] = useState<DatasetDetail[]>([]);
+
+  const refreshDatasets = useCallback(async () => {
+    try {
+      setDatasets(await listDatasets(DEMO_PROJECT_ID));
+    } catch (error) {
+      console.error("Datasets could not be loaded", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshDatasets();
+  }, [refreshDatasets]);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -70,8 +84,8 @@ export function ProjectDashboard() {
           <div className="grid gap-4 sm:grid-cols-3">
             <StatCard
               label="Datasets"
-              value="12"
-              detail="3 added this month"
+              value={String(datasets.length)}
+              detail="In this project"
               icon={Database}
             />
             <StatCard
@@ -93,7 +107,10 @@ export function ProjectDashboard() {
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
             <DatasetUpload
               projectId={DEMO_PROJECT_ID}
-              onUploaded={setUploadedDataset}
+              onUploaded={(dataset) => {
+                setUploadedDataset(dataset);
+                void refreshDatasets();
+              }}
             />
             <div className="flex flex-col justify-between rounded-2xl bg-primary p-7 text-primary-foreground shadow-sm">
               <div className="flex flex-col gap-4">
@@ -122,7 +139,7 @@ export function ProjectDashboard() {
           ) : null}
 
           <div className="grid gap-6 xl:grid-cols-2">
-            <DatasetList datasets={recentDatasets} />
+            <DatasetList datasets={datasets} />
             <AgentRunsList runs={recentAgentRuns} />
           </div>
         </div>

@@ -1,6 +1,6 @@
 export { getDb } from "./client.js";
 export { getDatabaseEnv } from "./env.js";
-export { findDatasetDetail, persistDataset } from "./datasets.js";
+export { findDatasetDetail, listDatasets, persistDataset } from "./datasets.js";
 export {
   completeAgentRunRecord,
   createAgentRunRecord,

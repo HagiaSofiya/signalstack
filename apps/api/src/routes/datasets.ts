@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { createDatasetSchema } from "@signalstack/schemas";
-import { findDatasetDetail, persistDataset } from "@signalstack/db";
+import { findDatasetDetail, listDatasets, persistDataset } from "@signalstack/db";
 
 import { AnalysisServiceError, inspectDataset } from "../lib/analysis-client.js";
 import { removeDatasetFile, saveDatasetFile } from "../lib/dataset-storage.js";
@@ -18,7 +18,18 @@ function isUploadedFile(value: unknown): value is File {
 }
 
 export const datasetRoutes = new Hono()
-  .get("/", (c) => c.json({ data: store.listDatasets(c.req.query("projectId")) }))
+  .get("/", async (c) => {
+    const projectId = c.req.query("projectId");
+    if (projectId && !createDatasetSchema.shape.projectId.safeParse(projectId).success) {
+      return c.json({ error: "projectId must be a valid UUID" }, 400);
+    }
+    try {
+      return c.json({ data: await listDatasets(projectId) });
+    } catch (error) {
+      console.error("Dataset list failed", error);
+      return c.json({ error: "Datasets could not be loaded" }, 503);
+    }
+  })
   .post("/", async (c) => {
     const parsed = createDatasetSchema.safeParse(await c.req.json());
     if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);

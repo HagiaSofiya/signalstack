@@ -72,3 +72,11 @@ export async function findDatasetDetail(
   const dataset = await getDb().dataset.findUnique({ where: { id } });
   return dataset ? toDatasetDetail(dataset) : null;
 }
+
+export async function listDatasets(projectId?: string): Promise<DatasetDetail[]> {
+  const datasets = await getDb().dataset.findMany({
+    where: projectId ? { projectId } : undefined,
+    orderBy: { createdAt: "desc" },
+  });
+  return datasets.map(toDatasetDetail);
+}

@@ -1,11 +1,3 @@
-export type DatasetItem = {
-  id: string;
-  filename: string;
-  rows: string;
-  updated: string;
-  kind: string;
-};
-
 export type AgentRunItem = {
   id: string;
   question: string;
@@ -15,12 +7,6 @@ export type AgentRunItem = {
 };
 
 export const DEMO_PROJECT_ID = "11111111-1111-4111-8111-111111111111";
-
-export const recentDatasets: DatasetItem[] = [
-  { id: "1", filename: "q3_revenue.csv", rows: "12,480 rows", updated: "Updated 2 hours ago", kind: "CSV" },
-  { id: "2", filename: "customer_segments.csv", rows: "8,214 rows", updated: "Updated yesterday", kind: "CSV" },
-  { id: "3", filename: "subscription_events.csv", rows: "42,910 rows", updated: "Updated Aug 28", kind: "CSV" },
-];
 
 export const recentAgentRuns: AgentRunItem[] = [
   { id: "1", question: "Which customer segments grew fastest in Q3?", status: "Completed", time: "Today, 10:42 AM", duration: "38 sec" },
